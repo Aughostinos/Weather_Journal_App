@@ -1,0 +1,26 @@
+-- creating database
+CREATE DATABASE weather_db;
+
+-- creating admin user and grant all privileges
+CREATE USER 'admin'@'%' IDENTIFIED BY 'Admin@123';
+GRANT ALL PRIVILEGES ON *.* To 'admin'@'%' WITH GRANT OPTION;
+
+-- Apply the changes
+FLUSH PRIVILEGES;
+
+-- Create User Table
+CREATE TABLE user (
+    UserID INT AUTO_INCREMENT PRIMARY KEY,
+    Username VARCHAR(255) UNIQUE NOT NULL,
+    Email VARCHAR(255) UNIQUE NOT NULL,
+    Password VARCHAR(255) NOT NULL
+);
+
+-- Create Feedback Table
+CREATE TABLE feedback (
+    FeedbackID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    FeedbackText TEXT NOT NULL,
+    TimeStamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    FOREIGN KEY (UserID) REFERENCES user(UserID)
+);

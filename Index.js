@@ -1,0 +1,22 @@
+const routes = require('./routes/routes')
+const connect = require('./helpers/dbconfig')
+const express= require('express');
+const app= express();
+
+const bodyParser= require('body-parser')
+//Here we are configuring express to use body-parser as middle-ware.
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
+// Cors for cross origin allowance
+const cors= require('cors');
+app.use(cors());
+
+connect()
+// Setup Server
+const port= 8000;
+ app.use('', routes)
+ app.listen(port, () => {
+    console.log('server running');
+    console.log (`running on localhost: ${port}`);
+ });
