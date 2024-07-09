@@ -13,6 +13,14 @@ const get_weather = () => {
         try {
             let { zipCode } = req.query
             const res = await fetch(baseURL + zipCode + apiKey);
+            if (!res.ok) {
+                let alt_weather = get_fallback_weather(zipCode)
+                return user_res.status(200).json({
+                    status: "success",
+                    alt_weather
+                });
+            }
+
             const data = await res.json()
             user_res.status(200).json({
                 status: "success",
@@ -20,7 +28,7 @@ const get_weather = () => {
             });
         } catch (error) {
             console.error(error)
-            res.status(500).json({
+            user_res.status(500).json({
                 status: "failed"
             })
         }
@@ -31,7 +39,7 @@ const get_weather = () => {
 
 const validate_zip = () => {
     return async (req, user_res, next) => {
-        const apiKey = 'lQGRrXI56BzCRPdknxD9UeMtiw7HqkCXdWosjBgah8M80qeMzTjq5u8QXHKbku43';
+        const apiKey = 'h8HNTlruqSBgRhdVLUGMYmXiWwJU490Cf3bIItOSVrKnHY9nNf4KEOCFAjgdxgHu';
         const zip_baseURL = `https://www.zipcodeapi.com/rest/${apiKey}/info.json/`;
 
         try {
@@ -78,47 +86,43 @@ const fallbackBaseURL = 'http://api.weatherbit.io/v2.0/current?postal_code=';
 const fallbackApiKey = '5ec92305af4e49429621e3360a5e2431';
 
 /*Fetch fallback weather data */
-const get_fallback_weather = () => {
-    return async (req, res, next) => {
-        try {
-            let { zipCode } = req.query;
-            // Zip code validation
-            const zipCodePattern = /^\d{5}(-\d{4})?$/;
-            if (!zipCode || !zipCodePattern.test(zipCode)) {
-                return res.status(400).json({
-                    status: "failed",
-                    message: "Invalid zip code format. Please provide a valid 5-digit zip code."
-                });
-            }
-
-            const response = await fetch(fallbackBaseURL + zipCode + fallbackApiKey);
-            if (!response.ok) {
-                return res.status(response.status).json({
-                    status: "failed",
-                    message: "Error fetching fallback weather data"
-                });
-            }
-            const data = await response.json();
-            res.status(200).json({
-                status: "success",
-                data
-            });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({
+async function get_fallback_weather(zipCode) {
+    try {
+        // Zip code validation
+        const zipCodePattern = /^\d{5}(-\d{4})?$/;
+        if (!zipCode || !zipCodePattern.test(zipCode)) {
+            return {
                 status: "failed",
-                message: "Internal Server Error"
-            });
+                message: "Invalid zip code format. Please provide a valid 5-digit zip code."
+            };
         }
+        const response = await fetch(fallbackBaseURL + zipCode + fallbackApiKey);
+        if (!response.ok) {
+            return {
+                status: "failed",
+                message: "Error fetching fallback weather data"
+            };
+        }
+        const data = await response.json();
+        return {
+            status: "success",
+            data
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            status: "failed",
+            message: "Internal Server Error"
+        };
     }
 }
 //feedback post 
 const submit_feedback = () => {
     return async (req, user_res, next) => {
         try {
-            let { feedback } = req.body;
+            let { feedback , email } = req.body;
 
-            if (!feedback) {
+            if (!feedback || !email) {
                 return user_res.status(400).json({
                     status: "failed",
                     error: "Feedback message is required"
@@ -179,4 +183,16 @@ const get_zip_help = () => {
         }
     }
 }
+
+//sing in
+
+//sing up
+/**
+ * post request, send the email and the password
+ * hashing pass
+ * insert to user table with hashed password
+ * return failed or success
+ */
+
+
 module.exports = { get_weather, validate_zip, get_fallback_weather, get_zip_help, submit_feedback }

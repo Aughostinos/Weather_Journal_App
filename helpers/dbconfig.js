@@ -1,23 +1,26 @@
-const mysql = require('mysql');
+const sql = require('mssql');
 
-//establish a connection to the db
-const connection = mysql.createConnection({
-    host: 'weatherapp.database.windows.net',
-    user: 'super_admin',
+// Database configuration
+const config = {
+    user: 'Super_admin',
     password: 'Alx@123#',
-    database: 'weather_db',
-    port: 3306
+    server: 'weatherapp.database.windows.net', 
+    database: 'weather_db_2024-07-09T11-39Z',
+    port: 1433,
+    options: {
+        encrypt: true, // Use this if you're on Windows Azure
+        enableArithAbort: true
+    }
+};
 
-});
+// Connect to the database
+const connect = async () => {
+    try {
+        await sql.connect(config);
+        console.log('Connected to db');
+    } catch (err) {
+        console.error('Error connecting to db:', err);
+    }
+};
 
-//connect to the db
-const connect = () => {
-    return connection.connect(err => {
-        if (err) {
-            console.error('Error connecting to db:', err);
-            return;
-        }
-        console.log('Connected to db')
-    });
-}
 module.exports = connect;

@@ -4,7 +4,6 @@ const { get_weather, validate_zip, get_fallback_weather, get_zip_help, submit_fe
 
 router.get('/weather', get_weather())
 router.get('/zip_validation', validate_zip())
-router.get('/get_fallback_weather', get_fallback_weather())
 router.get('/help', get_zip_help())
 router.post('/user_feedback', submit_feedback())
 
