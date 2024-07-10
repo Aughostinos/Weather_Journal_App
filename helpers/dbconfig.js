@@ -10,7 +10,8 @@ const config = {
     options: {
         encrypt: true,
         enableArithAbort: true
-    }
+    },
+requestTimeout: 60000
 };
 
 // SQL queries to create tables

@@ -1,22 +1,23 @@
-const db = require('../helpers/dbconfig');
+const sql = require('mssql');
 
 // Find user by email
-const findUserByEmail = (email, callback) => {
-  const query = 'SELECT * FROM users WHERE email = ?';
-  db.query(query, [email], (err, results) => {
-    if (err) return callback(err, null);
-    if (results.length > 0) return callback(null, results[0]);
-    return callback(null, null);
-  });
+const findUserByEmail = async (email) => {
+  const query = 'SELECT * FROM [user] WHERE Email = @Email';
+  const request = new sql.Request();
+  request.input('Email', sql.VarChar, email);
+  const result = await request.query(query);
+  return result.recordset[0];
 };
 
 // Create a new user
-const createUser = (user, callback) => {
-  const query = 'INSERT INTO users (email, password) VALUES (?, ?)';
-  db.query(query, [user.email, user.password], (err, results) => {
-    if (err) return callback(err, null);
-    return callback(null, results.insertId);
-  });
+const createUser = async (user) => {
+  const query = 'INSERT INTO [user] (Username, Email, PasswordHash) OUTPUT INSERTED.UserID VALUES (@Username, @Email, @PasswordHash)';
+  const request = new sql.Request();
+  request.input('Username', sql.VarChar, user.username);
+  request.input('Email', sql.VarChar, user.email);
+  request.input('PasswordHash', sql.VarChar, user.password);
+  const result = await request.query(query);
+  return result.recordset.length > 0 ? result.recordset[0] : null;
 };
 
 module.exports = {

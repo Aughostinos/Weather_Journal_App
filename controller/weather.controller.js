@@ -120,52 +120,46 @@ async function get_fallback_weather(zipCode) {
 }
 //feedback post 
 const submit_feedback = () => {
-    return async (req, user_res, next) => {
-        try {
-            let { feedback, email } = req.body;
-
-            if (!feedback || !email) {
-                return user_res.status(400).json({
-                    status: "failed",
-                    error: "Feedback message and email are required"
-                });
-            }
-
-            // Find the user by email
-            findUserByEmail(email, (err, user) => {
-                if (err) {
-                    console.error(err);
-                    return user_res.status(500).json({ message: 'Server error' });
-                }
-
-                if (!user) {
-                    return user_res.status(400).json({ message: 'User not found' });
-                }
-
-                // Create feedback
-                const newFeedback = { UserID: user.id, FeedbackText: feedback };
-                createFeedback(newFeedback, (err, feedbackId) => {
-                    if (err) {
-                        console.error(err);
-                        return user_res.status(500).json({ message: 'Server error' });
-                    }
-
-                    return user_res.status(200).json({
-                        status: "success",
-                        message: "Feedback received. Thank you!",
-                        feedbackId
-                    });
-                });
-            });
-        } catch (error) {
-            console.error(error);
-            user_res.status(500).json({
-                status: "failed",
-                error: "Internal Server Error"
-            });
+    return async (req, res) => {
+      try {
+        let { feedback, email } = req.body;
+  
+        if (!feedback || !email) {
+          return res.status(400).json({
+            status: "failed",
+            error: "Feedback message and email are required"
+          });
         }
-    }
-}
+  
+        // Find the user by email
+        const user = await findUserByEmail(email);
+  
+        if (!user) {
+          return res.status(400).json({ message: 'User not found' });
+        }
+  
+        // Create feedback
+        const newFeedback = { UserID: user.UserID, FeedbackText: feedback };
+        const createdFeedback = await createFeedback(newFeedback);
+  
+        if (!createdFeedback) {
+          return res.status(500).json({ message: 'Failed to create feedback' });
+        }
+  
+        return res.status(200).json({
+          status: "success",
+          message: "Feedback received. Thank you!",
+          feedbackId: createdFeedback.FeedbackID
+        });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({
+          status: "failed",
+          error: "Internal Server Error"
+        });
+      }
+    };
+  };
 //get_help API should return 
 const get_zip_help = () => {
     return (req, user_res, next) => {

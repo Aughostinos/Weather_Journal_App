@@ -6,29 +6,29 @@ const { findUserByEmail, createUser } = require('../models/user.model');
 const signup = () => {
   return async (req, res) => {
     try {
-      const { email, password } = req.body;
-      findUserByEmail(email, async (err, existingUser) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ message: 'Server error' });
-        }
+      const { username, email, password } = req.body;
 
-        if (existingUser) {
-          return res.status(400).json({ message: 'User already exists' });
-        }
+      if (!username || !email || !password) {
+        return res.status(400).json({ message: 'Username, email, and password are required' });
+      }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = { email, password: hashedPassword };
+      const existingUser = await findUserByEmail(email);
 
-        createUser(newUser, (err, userId) => {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ message: 'Server error' });
-          }
+      if (existingUser) {
+        return res.status(400).json({ message: 'User already exists' });
+      }
 
-          res.status(201).json({ message: 'User created successfully', userId });
-        });
-      });
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      const newUser = { username, email, password: hashedPassword };
+
+      const createdUser = await createUser(newUser);
+
+      if (!createdUser) {
+        return res.status(500).json({ message: 'Failed to create user' });
+      }
+
+      res.status(201).json({ message: 'User created successfully', userId: createdUser.UserID });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });
@@ -41,24 +41,24 @@ const signin = () => {
   return async (req, res) => {
     try {
       const { email, password } = req.body;
-      findUserByEmail(email, async (err, user) => {
-        if (err) {
-          console.error(err);
-          return res.status(500).json({ message: 'Server error' });
-        }
 
-        if (!user) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-        }
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+      }
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-          return res.status(400).json({ message: 'Invalid credentials' });
-        }
+      const user = await findUserByEmail(email);
 
-        const token = jwt.sign({ email: user.email }, 'your_jwt_secret', { expiresIn: '1h' });
-        res.status(200).json({ token });
-      });
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.PasswordHash);
+      if (!isPasswordValid) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign({ email: user.Email }, 'your_jwt_secret', { expiresIn: '1h' });
+      res.status(200).json({ token });
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });

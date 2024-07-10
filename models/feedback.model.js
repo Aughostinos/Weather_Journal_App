@@ -1,12 +1,13 @@
-const db = require('../helpers/dbconfig');
+const sql = require('mssql');
 
 // Create a new feedback entry
-const createFeedback = (feedback, callback) => {
-  const query = 'INSERT INTO feedback (UserID, FeedbackText) VALUES (?, ?)';
-  db.query(query, [feedback.UserID, feedback.FeedbackText], (err, results) => {
-    if (err) return callback(err, null);
-    return callback(null, results.insertId);
-  });
+const createFeedback = async (feedback) => {
+  const query = 'INSERT INTO [feedback] (UserID, FeedbackText) VALUES (@UserID, @FeedbackText);';
+  const request = new sql.Request();
+  request.input('UserID', sql.Int, feedback.UserID);
+  request.input('FeedbackText', sql.Text, feedback.FeedbackText);
+  const result = await request.query(query);
+  return result;
 };
 
 module.exports = {
