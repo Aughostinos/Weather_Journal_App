@@ -1,3 +1,5 @@
+const { createFeedback } = require('../models/feedback.model');
+const { findUserByEmail } = require('../models/user.model');
 //APIs
 // Create a new date instance dynamically with JS
 let d = new Date();
@@ -120,35 +122,41 @@ async function get_fallback_weather(zipCode) {
 const submit_feedback = () => {
     return async (req, user_res, next) => {
         try {
-            let { feedback , email } = req.body;
+            let { feedback, email } = req.body;
 
             if (!feedback || !email) {
                 return user_res.status(400).json({
                     status: "failed",
-                    error: "Feedback message is required"
+                    error: "Feedback message and email are required"
                 });
             }
 
-            // Here you would normally store the feedback in a database
-            // Assuming a function saveFeedback exists which saves feedback to the database
-            const saveFeedback = async (feedbackMessage) => {
-                // Simulate saving feedback to the database
-                return true; // Return true if saving was successful
-            };
+            // Find the user by email
+            findUserByEmail(email, (err, user) => {
+                if (err) {
+                    console.error(err);
+                    return user_res.status(500).json({ message: 'Server error' });
+                }
 
-            const result = await saveFeedback(feedback);
+                if (!user) {
+                    return user_res.status(400).json({ message: 'User not found' });
+                }
 
-            if (result) {
-                return user_res.status(200).json({
-                    status: "success",
-                    message: "Feedback received. Thank you!"
+                // Create feedback
+                const newFeedback = { UserID: user.id, FeedbackText: feedback };
+                createFeedback(newFeedback, (err, feedbackId) => {
+                    if (err) {
+                        console.error(err);
+                        return user_res.status(500).json({ message: 'Server error' });
+                    }
+
+                    return user_res.status(200).json({
+                        status: "success",
+                        message: "Feedback received. Thank you!",
+                        feedbackId
+                    });
                 });
-            } else {
-                return user_res.status(500).json({
-                    status: "failed",
-                    message: "Failed to store feedback"
-                });
-            }
+            });
         } catch (error) {
             console.error(error);
             user_res.status(500).json({
@@ -184,7 +192,7 @@ const get_zip_help = () => {
     }
 }
 
-//sing in
+
 
 //sing up
 /**
@@ -195,4 +203,5 @@ const get_zip_help = () => {
  */
 
 
+//sing in
 module.exports = { get_weather, validate_zip, get_fallback_weather, get_zip_help, submit_feedback }
