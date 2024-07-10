@@ -14,10 +14,15 @@ app.use(cors());
 
 connect()
 
+
+
 // Setup Server
 const port = 8000;
 app.use('', routes);
+app.get('/', (req, res) => {
+   res.json({ message: 'app listening' })
+});
 app.listen(port, () => {
-    console.log('server running');
-    console.log(`running on localhost: ${port}`);
+   console.log('server running');
+   console.log(`running on localhost: ${port}`);
 });
