@@ -14,7 +14,7 @@ app.use(cors({
    origin: '*'
 }));
 
-connect()
+db_connection = connect()
 
 
 
@@ -22,7 +22,7 @@ connect()
 const port = process.env.PORT || 8000;
 app.use('', routes);
 app.get('/', (req, res) => {
-   res.json({ message: 'app listening' })
+   res.json({ message: db_connection })
 });
 app.listen(port, () => {
    console.log('server running');

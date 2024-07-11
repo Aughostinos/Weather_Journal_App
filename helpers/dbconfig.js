@@ -49,8 +49,10 @@ const connect = async () => {
         // Create feedback table if not exists
         await sql.query(createFeedbackTableQuery);
         console.log('Feedback table checked/created');
+        return "success";
     } catch (err) {
         console.error('Error connecting to db or creating tables:', err);
+        return err;
     }
 };
 
