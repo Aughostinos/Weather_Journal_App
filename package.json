@@ -2,9 +2,9 @@
   "name": "weatherapp",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "Index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node Index.js",
     "build": "echo 'This is the build step.'"
   },
   "dependencies": {
