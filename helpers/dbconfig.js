@@ -1,9 +1,9 @@
 const sql = require('mssql');
-
+require('dotenv').config()
 // Database configuration
 const config = {
-    user: 'Super_admin',
-    password: 'Alx@123#',
+    user: process.env.USER,
+    password: process.env.Password,
     server: 'weatherapp.database.windows.net',
     database: 'weather_db_2024-07-09T11-39Z',
     port: 1433,
