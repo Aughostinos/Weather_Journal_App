@@ -4,8 +4,8 @@ require('dotenv').config()
 const config = {
     user: process.env.USER,
     password: process.env.Password,
-    server: 'weatherapp.database.windows.net',
-    database: 'weather_db_2024-07-09T11-39Z',
+    server: process.env.SERVER,
+    database: process.env.DATABASE,
     port: 1433,
     options: {
         encrypt: true,
@@ -37,7 +37,7 @@ CREATE TABLE feedback (
 `;
 
 // Connect to the database and create tables if they don't exist
-const connect = async () => {
+connect = async function connection() {
     try {
         await sql.connect(config);
         console.log('Connected to db');
