@@ -15,6 +15,7 @@ requestTimeout: 60000
 };
 
 // SQL queries to create tables
+//create user table
 const createUserTableQuery = `
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='user' AND xtype='U')
 CREATE TABLE [user] (
@@ -24,7 +25,7 @@ CREATE TABLE [user] (
     PasswordHash VARCHAR(255) NOT NULL
 );
 `;
-
+//create feedback table
 const createFeedbackTableQuery = `
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='feedback' AND xtype='U')
 CREATE TABLE feedback (

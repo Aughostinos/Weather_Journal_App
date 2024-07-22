@@ -1,44 +1,53 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { findUserByEmail, createUser } = require('../models/user.model');
 const { createFeedback } = require('../models/feedback.model');
-const { findUserByEmail } = require('../models/user.model');
-//APIs
+
+// Personal API Key for OpenWeatherMap API
+const apiKey = "&appid=ad05ded3faedd716b6dd93eb0e3d247c";
+const baseURL = 'http://api.openweathermap.org/data/2.5/weather?zip=';
+
+// Fallback weather API
+const fallbackBaseURL = 'http://api.weatherbit.io/v2.0/current?postal_code=';
+const fallbackApiKey = '5ec92305af4e49429621e3360a5e2431';
+
 // Create a new date instance dynamically with JS
 let d = new Date();
 let newDate = d.getMonth() + 1 + "/" + d.getDate() + "/" + d.getFullYear();
-// Personal API Key for OpenWeatherMap API
-const apiKey = "&appid=ad05ded3faedd716b6dd93eb0e3d247c"
-const baseURL = 'http://api.openweathermap.org/data/2.5/weather?zip=';
 
-
-/*Fetch data */
+// Fetch weather data from OpenWeatherMap API
 const get_weather = () => {
     return async (req, user_res, next) => {
         try {
-            let { zipCode } = req.query
+            let { zipCode } = req.query;
+
+            // Fetch weather data from primary API
             const res = await fetch(baseURL + zipCode + apiKey);
             if (!res.ok) {
-                let alt_weather = get_fallback_weather(zipCode)
+                // Fetch weather data from fallback API if primary API fails
+                let alt_weather = await get_fallback_weather(zipCode);
                 return user_res.status(200).json({
                     status: "success",
                     alt_weather
                 });
             }
 
-            const data = await res.json()
+            const data = await res.json();
             user_res.status(200).json({
                 status: "success",
                 data
             });
         } catch (error) {
-            console.error(error)
+            console.error(error);
             user_res.status(500).json({
-                status: "failed"
-            })
+                status: "failed",
+                error: "Internal Server Error"
+            });
         }
-    }
-}
-//validate_zip API that return a json object indicating weather the zip 
-//code is correct or not 
+    };
+};
 
+// Validate zip code
 const validate_zip = () => {
     return async (req, user_res, next) => {
         const apiKey = 'h8HNTlruqSBgRhdVLUGMYmXiWwJU490Cf3bIItOSVrKnHY9nNf4KEOCFAjgdxgHu';
@@ -54,6 +63,7 @@ const validate_zip = () => {
                 });
             }
 
+            // Fetch zip code information
             const response = await fetch(zip_baseURL + zipCode + '/degrees');
             if (response.ok) {
                 const data = await response.json();
@@ -81,13 +91,10 @@ const validate_zip = () => {
                 error: "Internal Server Error"
             });
         }
-    }
-}
-//etch weather data from an alternative weather API if the primary API fails.
-const fallbackBaseURL = 'http://api.weatherbit.io/v2.0/current?postal_code=';
-const fallbackApiKey = '5ec92305af4e49429621e3360a5e2431';
+    };
+};
 
-/*Fetch fallback weather data */
+// Fetch weather data from an alternative weather API if the primary API fails
 async function get_fallback_weather(zipCode) {
     try {
         // Zip code validation
@@ -98,6 +105,8 @@ async function get_fallback_weather(zipCode) {
                 message: "Invalid zip code format. Please provide a valid 5-digit zip code."
             };
         }
+
+        // Fetch fallback weather data
         const response = await fetch(fallbackBaseURL + zipCode + fallbackApiKey);
         if (!response.ok) {
             return {
@@ -118,49 +127,49 @@ async function get_fallback_weather(zipCode) {
         };
     }
 }
-//feedback post 
+
+// Submit feedback
 const submit_feedback = () => {
     return async (req, res) => {
-      try {
-        let { feedback, email } = req.body;
-  
-        if (!feedback || !email) {
-          return res.status(400).json({
-            status: "failed",
-            error: "Feedback message and email are required"
-          });
+        try {
+            let { feedback, email } = req.body;
+
+            if (!feedback || !email) {
+                return res.status(400).json({
+                    status: "failed",
+                    error: "Feedback message and email are required"
+                });
+            }
+
+            // Find the user by email
+            const user = await findUserByEmail(email);
+            if (!user) {
+                return res.status(400).json({ message: 'User not found' });
+            }
+
+            // Create feedback
+            const newFeedback = { UserID: user.UserID, FeedbackText: feedback };
+            const createdFeedback = await createFeedback(newFeedback);
+            if (!createdFeedback) {
+                return res.status(500).json({ message: 'Failed to create feedback' });
+            }
+
+            return res.status(200).json({
+                status: "success",
+                message: "Feedback received. Thank you!",
+                feedbackId: createdFeedback.FeedbackID
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({
+                status: "failed",
+                error: "Internal Server Error"
+            });
         }
-  
-        // Find the user by email
-        const user = await findUserByEmail(email);
-  
-        if (!user) {
-          return res.status(400).json({ message: 'User not found' });
-        }
-  
-        // Create feedback
-        const newFeedback = { UserID: user.UserID, FeedbackText: feedback };
-        const createdFeedback = await createFeedback(newFeedback);
-  
-        if (!createdFeedback) {
-          return res.status(500).json({ message: 'Failed to create feedback' });
-        }
-  
-        return res.status(200).json({
-          status: "success",
-          message: "Feedback received. Thank you!",
-          feedbackId: createdFeedback.FeedbackID
-        });
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({
-          status: "failed",
-          error: "Internal Server Error"
-        });
-      }
     };
-  };
-//get_help API should return 
+};
+
+// Get zip code help tips
 const get_zip_help = () => {
     return (req, user_res, next) => {
         try {
@@ -183,19 +192,8 @@ const get_zip_help = () => {
                 error: "Internal Server Error"
             });
         }
-    }
-}
+    };
+};
 
-
-
-//sing up
-/**
- * post request, send the email and the password
- * hashing pass
- * insert to user table with hashed password
- * return failed or success
- */
-
-
-//sing in
-module.exports = { get_weather, validate_zip, get_fallback_weather, get_zip_help, submit_feedback }
+// Export API handlers
+module.exports = { get_weather, validate_zip, get_fallback_weather, get_zip_help, submit_feedback };
